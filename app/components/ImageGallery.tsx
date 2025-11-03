@@ -21,7 +21,7 @@ const ImageGallery = ({generatedImageSet, favourites, handleAddFavorite} : {
                             />
                             <button
                                 onClick={() => handleAddFavorite(image, isFavourite)}
-                                className="absolute top-2 right-2 bg-white rounded-full p-1"
+                                className="absolute top-2 right-2 text-lg"
                             >
                                 {/* @ToDo: Replace with lucide icon */}
                                 {isFavourite ? "❤️" : "🤍"}
