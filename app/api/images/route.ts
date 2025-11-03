@@ -1,0 +1,38 @@
+import { GeneratedImages } from "@/app/types/images";
+import { NextResponse } from "next/server";
+import OpenAI from "openai";
+
+export const memory = {
+    generated: [] as GeneratedImages[],
+    favourites: [] as string[]
+}
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
+
+export async function POST(req: Request) {
+    try {
+        const {prompt, n = 1 } = await req.json();
+        console.log('here');
+    
+        // changing to Images API as it allows multiple image generation
+        const response = await openai.images.generate({
+            model: "gpt-image-1",
+            prompt: prompt,
+            n: n
+        });
+    
+        if (response.data) {
+            const imageData = response.data.map(img => img.b64_json!);
+            memory.generated.unshift({prompt, images: imageData});
+            return NextResponse.json({images: imageData});
+        }
+    
+        return NextResponse.json({error: "No images generated!"});
+    } catch (err) {
+        console.log("Error: ", err);
+        return NextResponse.json({error: "Error generating images"}, {status: 500});
+    }
+
+}
