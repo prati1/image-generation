@@ -14,7 +14,6 @@ const openai = new OpenAI({
 export async function POST(req: Request) {
     try {
         const {prompt, n = 1 } = await req.json();
-        console.log('here');
     
         // changing to Images API as it allows multiple image generation
         const response = await openai.images.generate({

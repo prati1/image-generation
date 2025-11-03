@@ -7,13 +7,14 @@ export default function Home() {
 
   const [input, setInput] = useState<string>("");
   const [noOfImages, setNoOfImages ] = useState(1);
-  // const [images, setImages] = useState<GeneratedImages[]>([]);
   const [images, setImages] = useState<GeneratedImages>();
-
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [allImages, setAllImages] = useState<GeneratedImages[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const getImages = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch("/api/images", {
         method: "POST",
         body: JSON.stringify({
@@ -29,12 +30,36 @@ export default function Home() {
         setAllImages((prev) => [{ prompt: input, images: imageData.images }, ...prev]);
       }
       setInput("");
+      setIsLoading(false);
 
     } catch (e) {
+      setIsLoading(false);
       console.log("error: ", e);
 
     }
   }
+
+  const handleAddFavorite = async (img: string, isFav: boolean) => {
+    await fetch("/api/favourites", {
+      method: isFav ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: img }),
+    });
+    if (!isFav) {
+      setFavorites((prev) => [...prev, img]);
+    } else {
+      setFavorites((prev) => prev.filter((curImg) => curImg !== img));
+    }
+  };
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      const res = await fetch("/api/favourites");
+      const data = await res.json();
+      setFavorites(data.favorites);
+    };
+    fetchFavorites();
+  }, []);
 
   useEffect(() => {
     const getAllGeneratedImages = async () => {
@@ -42,7 +67,7 @@ export default function Home() {
         const allImages = await fetch("/api/images/memory");
         const data = await allImages.json();
 
-        console.log(data.memory.generated);
+        console.log('memory', data.memory);
         setAllImages(data.memory.generated);
       } catch (e) {
         console.log("error", e);
@@ -80,26 +105,37 @@ export default function Home() {
           </div>
 
         </div>
-
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {images && images.images.map((image, j) => {
-                  return (
-                      <div key={j} className="relative">
-                      <img 
-                          src={`data:image/png;base64,${image}`}
-                          alt={`generated-${i}-${j}`}
-                          className="object-cover shrink-0 max-h-[200px]"
-                      />
-                      </div>
-                  );
-                  })}
+        
+        {isLoading ? <span className="text-black text-lg">Please wait while we finish generating images.</span>
+        : <div className="space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {images && images.images.map((image, i) => {
+                    const isFavourite = favorites.includes(image);
+                    return (
+                        <div key={i} className="relative">
+                        <img 
+                            src={`data:image/png;base64,${image}`}
+                            className="object-cover shrink-0 max-h-[200px]"
+                        />
+                        <button
+                            onClick={() => handleAddFavorite(image, isFavourite)}
+                            className="absolute top-2 right-2 bg-white rounded-full p-1"
+                        >
+                            {/* @ToDo: Replace with lucide icon */}
+                            {isFavourite ? "❤️" : "🤍"}
+                        </button>
+                        
+                        </div>
+                    );
+                    })}
+            </div>
           </div>
-        </div>
+        }
+
       </main>
       {allImages && allImages.length > 0 && 
       <div className="flex flex-col gap-2 flex-wrap shadow-2xl bg-zinc-50 mt-10 p-10">
-        <ImageGallery generatedImageSet={allImages} />
+        <ImageGallery generatedImageSet={allImages} favourites={favorites} handleAddFavorite={handleAddFavorite} />
       </div>}
       
     </div>
