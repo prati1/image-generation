@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { memory } from "../storage/data";
+import { memory } from "../../storage/data";
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -8,15 +8,26 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
     try {
-        const {prompt, n = 1 } = await req.json();
+        const formData = await req.formData();
+        const file = formData.get("file") as File;
+        const prompt = formData.get("prompt") as string;
+        const n = Number(formData.get("n") || 1);
+
+        if (!file) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+
+        const arrayBuffer = await file.arrayBuffer();
+        const base64Image = Buffer.from(arrayBuffer).toString("base64");
     
         // changing to Images API as it allows multiple image generation
-        const response = await openai.images.generate({
+        const response = await openai.images.edit({
             model: "dall-e-2",
             prompt: prompt,
             response_format: "b64_json",
-            n: n
+            n: n,
+            image: file
         });
+
+        console.log(response.data);
     
         if (response.data) {
             const imageData = response.data.map(img => img.b64_json!);

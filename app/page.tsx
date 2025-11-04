@@ -11,6 +11,7 @@ export default function Home() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [allImages, setAllImages] = useState<GeneratedImages[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [file, setFile] = useState<File | null>(null);
 
   const getImages = async () => {
     try {
@@ -52,6 +53,29 @@ export default function Home() {
     }
   };
 
+  const editImage = async () => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("prompt", input);
+    formData.append("n", noOfImages.toString());
+
+    const res = await fetch("/api/images/edit", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+     if (data) {
+        setImages({ prompt: input, images: data.images });
+        setAllImages((prev) => [{ prompt: input, images: data.images }, ...prev]);
+      }
+      setInput("");
+
+  }
+
   useEffect(() => {
     const fetchFavorites = async () => {
       const res = await fetch("/api/favourites");
@@ -82,19 +106,28 @@ export default function Home() {
       <main className="flex flex-row gap-5 items-center justify-between py-10 px-10 bg-white sm:items-start shadow-2xl">
         <div className="flex flex-col gap-2 items-start w-[50%]">
           <div className="flex flex-row flex-wrap gap-2">
-            <div className="rounded-xl border-2 p-2">
-              <input className="text-black min-w-[250px]" 
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="What do you want to generate today..." type="text" />
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-row gap-2">
+                <div className="rounded-xl border-2 p-2">
+                  <input className="text-black min-w-[250px]" 
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="What do you want to generate today..." type="text" />
+                </div>
+                <input className="text-black w-20 rounded-xl border px-3 py-2 border-gray-300" 
+                  type="number"
+                  min={1}
+                  value={noOfImages}
+                  onChange={(e) => setNoOfImages(Number(e.target.value))}
+                  />
+              </div>
+              <input type="file" className="border-2 rounded-2xl text-black p-2" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              <div>
+                <button className="border-2 bg-blue-600 hover:bg-blue-700 rounded-2xl p-2 font-bold shadow-xl" onClick={getImages}>Generate Image</button>
+                <button className="border-2 bg-yellow-600 hover:bg-yellow-700 rounded-2xl p-2 font-bold shadow-xl" onClick={editImage}>Edit Image</button>
+              </div>
             </div>
-            <input className="text-black w-20 rounded-xl border px-3 py-2 border-gray-300" 
-              type="number"
-              min={1}
-              value={noOfImages}
-              onChange={(e) => setNoOfImages(Number(e.target.value))}
-              />
-            <button className="border-2 bg-blue-600 hover:bg-blue-700 rounded-2xl p-2 font-bold shadow-xl" onClick={getImages}>Submit</button>
+
           </div>
 
           <span className="text-black font-bold">Image generated with description</span>
@@ -109,7 +142,7 @@ export default function Home() {
         {isLoading ? <span className="text-black text-lg">Please wait while we finish generating images.</span>
         : <div className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {images && images.images.map((image, i) => {
+                {images && images.images && images.images.map((image, i) => {
                     const isFavourite = favorites.includes(image);
                     return (
                         <div key={i} className="relative">

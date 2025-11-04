@@ -11,7 +11,7 @@ const ImageGallery = ({generatedImageSet, favourites, handleAddFavorite} : {
         <div className="pb-10" key={i}>
             <h3 className="font-medium mb-2 text-black">Prompt {i + 1}: {imageDet.prompt}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {imageDet.images.map((image, j) => {
+                {imageDet && imageDet.images && imageDet.images.map((image, j) => {
                     const isFavourite = favourites.includes(image);
                     return (
                         <div key={j} className="relative">
