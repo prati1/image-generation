@@ -10,23 +10,23 @@ export async function POST(req: Request) {
     try {
         const formData = await req.formData();
         const file = formData.get("file") as File;
-        const prompt = formData.get("prompt") as string;
         const n = Number(formData.get("n") || 1);
 
         if (!file) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     
         // changing to Images API as it allows multiple image generation
-        const response = await openai.images.edit({
+        const response = await openai.images.createVariation({
             model: "dall-e-2",
-            prompt: prompt,
             response_format: "b64_json",
             n: n,
             image: file
         });
+
+        console.log(response.data);
     
         if (response.data) {
             const imageData = response.data.map(img => img.b64_json!);
-            memory.generated.unshift({prompt, images: imageData});
+            memory.generated.unshift({prompt: "Variation Created", images: imageData});
             return NextResponse.json({images: imageData});
         }
     

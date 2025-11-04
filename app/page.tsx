@@ -56,24 +56,58 @@ export default function Home() {
   const editImage = async () => {
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("prompt", input);
-    formData.append("n", noOfImages.toString());
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("prompt", input);
+      formData.append("n", noOfImages.toString());
+  
+      const res = await fetch("/api/images/edit", {
+        method: "POST",
+        body: formData
+      });
+  
+      const data = await res.json();
+  
+       if (data) {
+          setImages({ prompt: input, images: data.images });
+          setAllImages((prev) => [{ prompt: input, images: data.images }, ...prev]);
+        }
+        setInput("");
+        setIsLoading(false);
+    } catch (e) {
+      setIsLoading(false);
+      console.log('error editing: ', e);
+    }
+  }
 
-    const res = await fetch("/api/images/edit", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-
-     if (data) {
-        setImages({ prompt: input, images: data.images });
-        setAllImages((prev) => [{ prompt: input, images: data.images }, ...prev]);
-      }
-      setInput("");
-
+  const createVariation = async () => {
+    if (!file) return;
+    try {
+      setIsLoading(true);
+  
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("n", noOfImages.toString());
+  
+      const res = await fetch("/api/images/variation", {
+        method: "POST",
+        body: formData
+      });
+  
+      const data = await res.json();
+  
+       if (data) {
+          setImages({ prompt: input, images: data.images });
+          setAllImages((prev) => [{ prompt: input, images: data.images }, ...prev]);
+        }
+        setInput("");
+        setIsLoading(false);
+    } catch (e) {
+      setIsLoading(false);
+      console.log(e);
+    }
   }
 
   useEffect(() => {
@@ -125,6 +159,7 @@ export default function Home() {
               <div>
                 <button className="border-2 bg-blue-600 hover:bg-blue-700 rounded-2xl p-2 font-bold shadow-xl" onClick={getImages}>Generate Image</button>
                 <button className="border-2 bg-yellow-600 hover:bg-yellow-700 rounded-2xl p-2 font-bold shadow-xl" onClick={editImage}>Edit Image</button>
+                <button className="border-2 bg-green-600 hover:bg-green-700 rounded-2xl p-2 font-bold shadow-xl" onClick={createVariation}>Create Variation</button>
               </div>
             </div>
 
