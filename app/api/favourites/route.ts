@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { memory } from "../images/route";
+import { memory } from "../storage/data";
 
 export async function GET() {
   return NextResponse.json({ favorites: memory.favourites });
